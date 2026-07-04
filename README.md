@@ -2,6 +2,10 @@
 
 Show a different favicon in local development, preview/staging, and production — so you can tell your tabs apart at a glance. Reuses [Vercel's own environment convention](https://vercel.com/docs/environment-variables/system-environment-variables) (`VERCEL_ENV`), so it works out of the box on Vercel and is easy to configure anywhere else.
 
+![The same favicon shown per environment: untouched in production, on an amber background in preview, green in development, and purple for a custom staging environment — for both a colorful brand icon and a dark glyph, at full and tab size.](docs/preview.png)
+
+*One SVG in, per-environment variants out — production untouched, everything else on a colored background that's unmissable even at 16px.*
+
 Three ways to define your favicons, from zero-config to fully custom:
 - **One SVG on a colored background** *(zero config)* — your existing favicon untouched in production, inset on a colored rounded square in preview/development. Works with any SVG.
 - **One SVG, recolored per environment** — draw it once with `fill="currentColor"`, pick a color per env.
