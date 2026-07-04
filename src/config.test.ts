@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  createBadgeFaviconConfig,
   createColorFaviconConfig,
+  createEnvFaviconConfig,
   DEFAULT_ENV_COLORS,
   resolveFavicon,
 } from './config.js';
@@ -99,21 +99,21 @@ describe('createColorFaviconConfig', () => {
   });
 });
 
-describe('createBadgeFaviconConfig', () => {
-  it('leaves production untouched and badges preview/development by default', () => {
-    const config = createBadgeFaviconConfig(SVG);
+describe('createEnvFaviconConfig', () => {
+  it('leaves production untouched and adds colored backgrounds to preview/development by default', () => {
+    const config = createEnvFaviconConfig(SVG);
     const production = resolveFavicon(config, 'production').href;
     const preview = resolveFavicon(config, 'preview').href;
 
     expect(production).toBe(resolveFavicon({ production: { type: 'svg', svg: SVG } }, 'production').href);
-    expect(preview).toContain(encodeURIComponent('<circle'));
+    expect(preview).toContain(encodeURIComponent('<rect'));
     expect(preview).toContain(encodeURIComponent(DEFAULT_ENV_COLORS.preview));
   });
 
   it('supports custom environments and colors', () => {
-    const config = createBadgeFaviconConfig(SVG, { staging: '#8b5cf6' });
+    const config = createEnvFaviconConfig(SVG, { staging: '#8b5cf6' });
     expect(resolveFavicon(config, 'staging').href).toContain(encodeURIComponent('#8b5cf6'));
     // the custom map replaces the defaults, so preview has no entry and falls back to production
-    expect(resolveFavicon(config, 'preview').href).not.toContain(encodeURIComponent('<circle'));
+    expect(resolveFavicon(config, 'preview').href).not.toContain(encodeURIComponent('<rect'));
   });
 });

@@ -1,11 +1,11 @@
 export { detectFaviconEnv } from './env.js';
 export type { FaviconEnv } from './env.js';
 
-export { badgeSvg, recolorSvg, svgToDataUri } from './svg.js';
+export { backgroundSvg, recolorSvg, svgToDataUri } from './svg.js';
 
 export {
   resolveFavicon,
-  createBadgeFaviconConfig,
+  createEnvFaviconConfig,
   createColorFaviconConfig,
   DEFAULT_ENV_COLORS,
 } from './config.js';
@@ -16,3 +16,6 @@ export type {
   UrlFaviconSource,
   ResolvedFavicon,
 } from './config.js';
+
+export { faviconRewrites } from './rewrites.js';
+export type { FaviconRewrite } from './rewrites.js';

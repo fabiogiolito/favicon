@@ -10,14 +10,15 @@ export function recolorSvg(svg: string, color: string): string {
   return svg.replace(/currentColor/g, color);
 }
 
-const BADGE_CANVAS = 100;
+const CANVAS = 100;
 
 /**
- * Rewrites the root `<svg>` tag to render at a fixed pixel size so it can be
- * nested inside a badge wrapper. Only the root tag is touched; any existing
- * width/height attributes are dropped (the SVG's viewBox handles scaling).
+ * Rewrites the root `<svg>` tag to render at a fixed position and size so it
+ * can be nested inside a wrapper canvas. Only the root tag is touched; any
+ * existing width/height attributes are dropped (the SVG's viewBox handles
+ * scaling).
  */
-function forceRootSize(svg: string, size: number): string {
+function forceRootBox(svg: string, size: number, x = 0, y = 0): string {
   const start = svg.indexOf('<svg');
   if (start === -1) return svg;
   const end = svg.indexOf('>', start);
@@ -25,24 +26,24 @@ function forceRootSize(svg: string, size: number): string {
 
   let tag = svg.slice(start, end + 1);
   const selfClosing = tag.endsWith('/>');
-  tag = tag.replace(/\s(?:width|height)\s*=\s*("[^"]*"|'[^']*')/g, '');
-  tag = tag.slice(0, selfClosing ? -2 : -1) + ` width="${size}" height="${size}"` + (selfClosing ? '/>' : '>');
+  tag = tag.replace(/\s(?:width|height|x|y)\s*=\s*("[^"]*"|'[^']*')/g, '');
+  const box = ` x="${x}" y="${y}" width="${size}" height="${size}"`;
+  tag = tag.slice(0, selfClosing ? -2 : -1) + box + (selfClosing ? '/>' : '>');
 
   return svg.slice(0, start) + tag + svg.slice(end + 1);
 }
 
 /**
- * Overlays a colored dot in the bottom-right corner of an SVG — like
- * editor tab badges — without altering the artwork itself. Works with any
- * SVG regardless of how it's colored (no `currentColor` required); the
- * original just needs a `viewBox` so it scales into the badge canvas.
+ * Places the icon (inset to 64%) on a colored rounded-square background,
+ * app-icon style. The artwork itself is untouched — the inset guarantees
+ * the environment color stays visible around it, even at 16px tab size.
+ * Works with any SVG that has a `viewBox`.
  */
-export function badgeSvg(svg: string, color: string): string {
-  const inner = forceRootSize(svg, BADGE_CANVAS);
+export function backgroundSvg(svg: string, color: string): string {
   return (
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${BADGE_CANVAS} ${BADGE_CANVAS}">` +
-    inner +
-    `<circle cx="76" cy="76" r="22" fill="${color}"/>` +
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CANVAS} ${CANVAS}">` +
+    `<rect width="${CANVAS}" height="${CANVAS}" rx="22" fill="${color}"/>` +
+    forceRootBox(svg, 64, 18, 18) +
     `</svg>`
   );
 }

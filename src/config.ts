@@ -1,5 +1,5 @@
 import type { FaviconEnv } from './env.js';
-import { badgeSvg, recolorSvg, svgToDataUri } from './svg.js';
+import { backgroundSvg, recolorSvg, svgToDataUri } from './svg.js';
 
 /** A single SVG template recolored for one environment via `currentColor`. */
 export interface SvgFaviconSource {
@@ -88,22 +88,23 @@ export function resolveFavicon(config: FaviconConfig, env: FaviconEnv): Resolved
 }
 
 /**
- * Zero-config helper: takes your existing favicon SVG and overlays a
- * colored corner dot per environment, leaving production untouched.
- * Defaults to an amber dot on previews and a green dot in development;
- * pass your own map to change colors or add custom environments.
+ * Zero-config helper: takes your existing favicon SVG and, for each
+ * non-production environment, insets it on a colored rounded-square
+ * background — production stays untouched. Works with any SVG (no
+ * `currentColor` markup needed); the inset keeps the environment color
+ * clearly visible even at 16px tab size.
  *
  * @example
- * createBadgeFaviconConfig(icon); // amber dot on preview, green on dev
- * createBadgeFaviconConfig(icon, { staging: '#8b5cf6', development: '#22c55e' });
+ * createEnvFaviconConfig(icon); // amber background on preview, green on dev
+ * createEnvFaviconConfig(icon, { staging: '#8b5cf6', development: '#22c55e' });
  */
-export function createBadgeFaviconConfig(
+export function createEnvFaviconConfig(
   svg: string,
   colors: Record<string, string> = DEFAULT_ENV_COLORS,
 ): FaviconConfig {
   const config: FaviconConfig = { production: { type: 'svg', svg } };
   for (const [env, color] of Object.entries(colors)) {
-    config[env] = { type: 'svg', svg: badgeSvg(svg, color) };
+    config[env] = { type: 'svg', svg: backgroundSvg(svg, color) };
   }
   return config;
 }
