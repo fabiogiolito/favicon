@@ -133,9 +133,16 @@ function App() {
 }
 ```
 
-Since `env-favicon/react` reads `process.env` in the browser bundle, make sure your bundler inlines `NEXT_PUBLIC_VERCEL_ENV` (or your `NEXT_PUBLIC_FAVICON_ENV` override) at build time — Next.js, Create React App, and Vite (with the `NEXT_PUBLIC_` var re-exposed) all do this automatically for prefixed variables.
+Auto-detection in the browser relies on your bundler inlining the env var at build time. Next.js does this for `NEXT_PUBLIC_*` variables, and on Vercel `NEXT_PUBLIC_VERCEL_ENV` is exposed automatically — so Next.js apps need zero config. Other bundlers don't inline `NEXT_PUBLIC_*` by default (Vite inlines `VITE_*` on `import.meta.env`, CRA inlines `REACT_APP_*`), so either map the variable through your bundler's `define` config, or skip detection and pass the environment explicitly:
 
-Define `faviconConfig` as a module-level constant (as above) rather than inline in JSX — it's a `useEffect` dependency, so a new object on every render re-applies the favicon every render.
+```tsx
+// Vite example — derive the env yourself and pass it in:
+useFavicon(faviconConfig, {
+  env: import.meta.env.VITE_VERCEL_ENV ?? (import.meta.env.PROD ? 'production' : 'development'),
+});
+```
+
+Every integration point (`useFavicon`, `<Favicon />`, `getFaviconMetadata`, `<FaviconHead />`) accepts this optional `env` override.
 
 ## API
 
@@ -146,10 +153,10 @@ Define `faviconConfig` as a module-level constant (as above) rather than inline 
 | `createColorFaviconConfig(svg, colors)` | `env-favicon` | Builds a `FaviconConfig` that recolors one SVG per environment. |
 | `recolorSvg(svg, color)` | `env-favicon` | Replaces `currentColor` in an SVG string with a literal color. |
 | `svgToDataUri(svg)` | `env-favicon` | Encodes an SVG string as a `data:image/svg+xml` URI. |
-| `useFavicon(config)` | `env-favicon/react` | Hook that sets `document.head`'s favicon link on mount. |
-| `<Favicon config={config} />` | `env-favicon/react` | Component form of `useFavicon`. Renders nothing. |
-| `getFaviconMetadata(config)` | `env-favicon/next` | Builds the `icons` field for App Router `generateMetadata`/`metadata`. |
-| `<FaviconHead config={config} />` | `env-favicon/next` | Pages Router component that injects the favicon `<link>` via `next/head`. |
+| `useFavicon(config, options?)` | `env-favicon/react` | Hook that sets `document.head`'s favicon link. `options.env` forces an environment. |
+| `<Favicon config={config} env? />` | `env-favicon/react` | Component form of `useFavicon`. Renders nothing. |
+| `getFaviconMetadata(config, env?)` | `env-favicon/next` | Builds the `icons` field for App Router `generateMetadata`/`metadata`. |
+| `<FaviconHead config={config} env? />` | `env-favicon/next` | Pages Router component that injects the favicon `<link>` via `next/head`. |
 
 ## License
 

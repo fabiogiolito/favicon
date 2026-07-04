@@ -1,5 +1,5 @@
 import Head from 'next/head';
-import { detectFaviconEnv } from './env.js';
+import { detectFaviconEnv, type FaviconEnv } from './env.js';
 import { resolveFavicon, type FaviconConfig } from './config.js';
 
 /**
@@ -18,8 +18,8 @@ import { resolveFavicon, type FaviconConfig } from './config.js';
  *   icons: getFaviconMetadata(faviconConfig),
  * };
  */
-export function getFaviconMetadata(config: FaviconConfig) {
-  const { href, mimeType } = resolveFavicon(config, detectFaviconEnv());
+export function getFaviconMetadata(config: FaviconConfig, env?: FaviconEnv) {
+  const { href, mimeType } = resolveFavicon(config, env ?? detectFaviconEnv());
   return {
     icon: [{ url: href, type: mimeType }],
   };
@@ -27,6 +27,8 @@ export function getFaviconMetadata(config: FaviconConfig) {
 
 export interface FaviconHeadProps {
   config: FaviconConfig;
+  /** Force a specific environment instead of auto-detecting. */
+  env?: FaviconEnv;
 }
 
 /**
@@ -48,8 +50,8 @@ export interface FaviconHeadProps {
  *   );
  * }
  */
-export function FaviconHead({ config }: FaviconHeadProps) {
-  const { href, mimeType } = resolveFavicon(config, detectFaviconEnv());
+export function FaviconHead({ config, env }: FaviconHeadProps) {
+  const { href, mimeType } = resolveFavicon(config, env ?? detectFaviconEnv());
   return (
     <Head>
       <link rel="icon" href={href} type={mimeType} />
