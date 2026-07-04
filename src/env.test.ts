@@ -59,9 +59,21 @@ describe('detectFaviconEnv', () => {
     expect(detectFaviconEnv()).toBe('development');
   });
 
-  it('ignores invalid values and falls through', () => {
+  it('passes through Vercel custom environment names', () => {
     clearEnv();
-    process.env.VERCEL_ENV = 'bogus';
+    process.env.VERCEL_ENV = 'staging';
+    expect(detectFaviconEnv()).toBe('staging');
+  });
+
+  it('passes through custom names from the override var', () => {
+    clearEnv();
+    process.env.FAVICON_ENV = 'qa';
+    expect(detectFaviconEnv()).toBe('qa');
+  });
+
+  it('treats an empty string as unset', () => {
+    clearEnv();
+    process.env.VERCEL_ENV = '';
     process.env.NODE_ENV = 'production';
     expect(detectFaviconEnv()).toBe('production');
   });

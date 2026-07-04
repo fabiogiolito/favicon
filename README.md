@@ -2,11 +2,12 @@
 
 Show a different favicon in local development, preview/staging, and production — so you can tell your tabs apart at a glance. Reuses [Vercel's own environment convention](https://vercel.com/docs/environment-variables/system-environment-variables) (`VERCEL_ENV`), so it works out of the box on Vercel and is easy to configure anywhere else.
 
-Two ways to define your favicons:
+Three ways to define your favicons, from zero-config to fully custom:
+- **One SVG + a corner badge** *(zero config)* — your existing favicon untouched in production, with a colored dot overlaid in preview/development. Works with any SVG.
 - **One SVG, recolored per environment** — draw it once with `fill="currentColor"`, pick a color per env.
 - **A different file per environment** — point each env at its own PNG/ICO/SVG.
 
-Ships with plain-JS core, a React hook/component, and Next.js helpers for both the App Router and Pages Router.
+Custom environments (staging, QA, …) are supported everywhere, matching Vercel's custom environments feature. Ships with a plain-JS core, a React hook/component, and Next.js helpers for both the App Router and Pages Router. Zero dependencies, tree-shakeable, and SVG favicons are inlined as data URIs — no extra network requests.
 
 ## Install
 
@@ -18,15 +19,38 @@ npm install env-favicon
 
 ## How the environment is detected
 
-`detectFaviconEnv()` resolves to `"production"`, `"preview"`, or `"development"`, in this order:
+`detectFaviconEnv()` resolves to `"production"`, `"preview"`, `"development"`, or a custom environment name, in this order:
 
-1. **`VERCEL_ENV`** / **`NEXT_PUBLIC_VERCEL_ENV`** — set automatically by Vercel, so zero config is needed there.
-2. **`FAVICON_ENV`** / **`NEXT_PUBLIC_FAVICON_ENV`** — a manual override for other hosts (Netlify, Render, self-managed staging, etc). Set it to `production` / `preview` / `development` in that environment's config.
+1. **`VERCEL_ENV`** / **`NEXT_PUBLIC_VERCEL_ENV`** — set automatically by Vercel, so zero config is needed there. Vercel custom environments (e.g. `staging`) pass through as-is.
+2. **`FAVICON_ENV`** / **`NEXT_PUBLIC_FAVICON_ENV`** — a manual override for other hosts (Netlify, Render, self-managed staging, etc). Set it to `production` / `preview` / `development` or any custom name in that environment's config.
 3. Falls back to `NODE_ENV === 'production' ? 'production' : 'development'`.
 
 Use the `NEXT_PUBLIC_`-prefixed variable when the value needs to reach the browser (e.g. in a React hook); the bare variable is enough on the server (e.g. in Next.js metadata).
 
-## Quick start: one SVG, three colors
+## Quick start: zero config
+
+Hand it the SVG you already use and you're done — production shows it untouched; previews get an amber corner dot and local development a green one, so you can tell tabs apart at a glance:
+
+```ts
+// favicon.config.ts
+import { createBadgeFaviconConfig } from 'env-favicon';
+
+const icon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">...your favicon...</svg>`;
+
+export const faviconConfig = createBadgeFaviconConfig(icon);
+```
+
+This works with any SVG — no special markup needed (just make sure it has a `viewBox`). Pass your own map to change colors or badge other environments:
+
+```ts
+export const faviconConfig = createBadgeFaviconConfig(icon, {
+  preview: '#f59e0b',
+  staging: '#8b5cf6',
+  development: '#22c55e',
+});
+```
+
+## Quick start: one SVG, recolored per environment
 
 ```ts
 // favicon.config.ts
@@ -45,7 +69,7 @@ export const faviconConfig = createColorFaviconConfig(icon, {
 });
 ```
 
-`currentColor` in the SVG is swapped for the given color and encoded as a `data:image/svg+xml` URI — no build step or extra files required.
+`currentColor` in the SVG is swapped for the given color and encoded as a `data:image/svg+xml` URI — no build step or extra files required. The colors argument is optional (defaults: amber preview, green development, production as-is) and accepts custom environment names as keys.
 
 ## Quick start: a different file per environment
 
@@ -60,7 +84,7 @@ export const faviconConfig: FaviconConfig = {
 };
 ```
 
-Any environment you omit falls back to `production`. Sources can also be mixed — e.g. SVG recoloring for two environments and an explicit file for the third — by using the object form directly:
+Sources can also be mixed — e.g. SVG recoloring for two environments and an explicit file for the third — by using the object form directly:
 
 ```ts
 import type { FaviconConfig } from 'env-favicon';
@@ -71,6 +95,22 @@ export const faviconConfig: FaviconConfig = {
   development: { type: 'url', href: '/favicon-dev.ico' },
 };
 ```
+
+## Custom environments & fallbacks
+
+Config keys aren't limited to the standard three — any environment name works:
+
+```ts
+export const faviconConfig: FaviconConfig = {
+  production: '/favicon.png',
+  preview: '/favicon-preview.png',
+  staging: '/favicon-staging.png',
+};
+```
+
+The detected environment is matched against these keys. [Vercel custom environments](https://vercel.com/docs/deployments/environments#custom-environments) set `VERCEL_ENV` to the custom name automatically; anywhere else, set `FAVICON_ENV=staging` (or `NEXT_PUBLIC_FAVICON_ENV` for the browser).
+
+Fallback order when an environment has no entry: the environment's own key → `preview` (for any non-production environment, so an unconfigured staging or QA deploy is still visually marked as "not production") → `production`.
 
 ## Next.js — App Router
 
@@ -148,9 +188,12 @@ Every integration point (`useFavicon`, `<Favicon />`, `getFaviconMetadata`, `<Fa
 
 | Export | From | Description |
 | --- | --- | --- |
-| `detectFaviconEnv()` | `env-favicon` | Returns `"production" \| "preview" \| "development"` for the current environment. |
+| `detectFaviconEnv()` | `env-favicon` | Returns `"production"`, `"preview"`, `"development"`, or a custom environment name. |
 | `resolveFavicon(config, env)` | `env-favicon` | Resolves a `FaviconConfig` + env into `{ href, mimeType }`. |
-| `createColorFaviconConfig(svg, colors)` | `env-favicon` | Builds a `FaviconConfig` that recolors one SVG per environment. |
+| `createBadgeFaviconConfig(svg, colors?)` | `env-favicon` | Zero-config: overlays a colored corner dot per environment on any SVG. |
+| `createColorFaviconConfig(svg, colors?)` | `env-favicon` | Builds a `FaviconConfig` that recolors one `currentColor` SVG per environment. |
+| `DEFAULT_ENV_COLORS` | `env-favicon` | The default color map: amber `preview`, green `development`. |
+| `badgeSvg(svg, color)` | `env-favicon` | Adds a colored corner dot to an SVG string. |
 | `recolorSvg(svg, color)` | `env-favicon` | Replaces `currentColor` in an SVG string with a literal color. |
 | `svgToDataUri(svg)` | `env-favicon` | Encodes an SVG string as a `data:image/svg+xml` URI. |
 | `useFavicon(config, options?)` | `env-favicon/react` | Hook that sets `document.head`'s favicon link. `options.env` forces an environment. |

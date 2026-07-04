@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { createColorFaviconConfig, resolveFavicon } from './config.js';
+import {
+  createBadgeFaviconConfig,
+  createColorFaviconConfig,
+  DEFAULT_ENV_COLORS,
+  resolveFavicon,
+} from './config.js';
 
 const SVG = '<svg><path fill="currentColor" d="M0 0h10v10H0z" /></svg>';
 
@@ -31,6 +36,24 @@ describe('resolveFavicon', () => {
     expect(resolved.href).toBe('/preview.png');
   });
 
+  it('resolves custom environment names against matching config keys', () => {
+    const resolved = resolveFavicon(
+      { production: '/prod.png', staging: '/staging.png' },
+      'staging',
+    );
+    expect(resolved.href).toBe('/staging.png');
+  });
+
+  it('falls back to preview for unconfigured non-production environments', () => {
+    const config = { production: '/prod.png', preview: '/preview.png' };
+    expect(resolveFavicon(config, 'staging').href).toBe('/preview.png');
+    expect(resolveFavicon(config, 'development').href).toBe('/preview.png');
+  });
+
+  it('falls back to production when neither the env nor preview is configured', () => {
+    expect(resolveFavicon({ production: '/prod.png' }, 'staging').href).toBe('/prod.png');
+  });
+
   it('respects an explicit mimeType on url sources', () => {
     const resolved = resolveFavicon(
       { production: { type: 'url', href: '/icon', mimeType: 'image/png' } },
@@ -57,5 +80,40 @@ describe('createColorFaviconConfig', () => {
     const config = createColorFaviconConfig(SVG, { production: 'red' });
     expect(config.preview).toBeUndefined();
     expect(resolveFavicon(config, 'preview').href).toContain('red');
+  });
+
+  it('applies default preview/development colors with no colors argument', () => {
+    const config = createColorFaviconConfig(SVG);
+    expect(resolveFavicon(config, 'preview').href).toContain(
+      encodeURIComponent(DEFAULT_ENV_COLORS.preview),
+    );
+    expect(resolveFavicon(config, 'development').href).toContain(
+      encodeURIComponent(DEFAULT_ENV_COLORS.development),
+    );
+    expect(resolveFavicon(config, 'production').href).toContain('currentColor');
+  });
+
+  it('supports custom environment names as color keys', () => {
+    const config = createColorFaviconConfig(SVG, { production: 'red', staging: 'purple' });
+    expect(resolveFavicon(config, 'staging').href).toContain('purple');
+  });
+});
+
+describe('createBadgeFaviconConfig', () => {
+  it('leaves production untouched and badges preview/development by default', () => {
+    const config = createBadgeFaviconConfig(SVG);
+    const production = resolveFavicon(config, 'production').href;
+    const preview = resolveFavicon(config, 'preview').href;
+
+    expect(production).toBe(resolveFavicon({ production: { type: 'svg', svg: SVG } }, 'production').href);
+    expect(preview).toContain(encodeURIComponent('<circle'));
+    expect(preview).toContain(encodeURIComponent(DEFAULT_ENV_COLORS.preview));
+  });
+
+  it('supports custom environments and colors', () => {
+    const config = createBadgeFaviconConfig(SVG, { staging: '#8b5cf6' });
+    expect(resolveFavicon(config, 'staging').href).toContain(encodeURIComponent('#8b5cf6'));
+    // the custom map replaces the defaults, so preview has no entry and falls back to production
+    expect(resolveFavicon(config, 'preview').href).not.toContain(encodeURIComponent('<circle'));
   });
 });
