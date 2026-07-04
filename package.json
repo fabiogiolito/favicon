@@ -1,0 +1,75 @@
+{
+  "name": "env-favicon",
+  "version": "0.1.0",
+  "description": "Show a different favicon per environment (production/preview/development) using Vercel's env var convention. Recolor one SVG or swap in per-env PNGs, with React and Next.js helpers included.",
+  "keywords": [
+    "favicon",
+    "vercel",
+    "environment",
+    "react",
+    "nextjs",
+    "svg"
+  ],
+  "license": "MIT",
+  "author": "Fabio Giolito",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fabiogiolito/favicon.git"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "import": "./dist/react.js",
+      "require": "./dist/react.cjs"
+    },
+    "./next": {
+      "types": "./dist/next.d.ts",
+      "import": "./dist/next.js",
+      "require": "./dist/next.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "next": ">=13",
+    "react": ">=17"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "next": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.0",
+    "@types/react": "^18.3.0",
+    "next": "^14.2.0",
+    "react": "^18.3.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
